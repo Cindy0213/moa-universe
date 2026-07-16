@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Camera, IdCard, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { z } from "zod";
 import { AmbientBackground } from "@/components/layout/AmbientBackground";
 import { Button } from "@/components/shared/Button";
 import { useApp } from "@/components/shared/AppProvider";
@@ -14,6 +15,8 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { getLevelProgress, getTaskProgress } from "@/lib/progress";
 import { memberById, members } from "@/data/members";
 import type { UserProfile } from "@/types";
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 async function fileToAvatar(file: File) {
   const objectUrl = URL.createObjectURL(file);
@@ -42,8 +45,7 @@ async function fileToAvatar(file: File) {
 
 export default function ArchivePage() {
   const { profile, setProfile, timeline, collection, toast, messages } = useApp();
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<UserProfile>({ resolver: zodResolver(profileSchema), defaultValues: profile });
-  const watchedAvatar = watch("avatar");
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ProfileFormValues>({ resolver: zodResolver(profileSchema), defaultValues: profile });
   const [avatarPreview, setAvatarPreview] = useState(profile.avatar);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const today = new Date().toISOString().slice(0, 10);
@@ -52,15 +54,13 @@ export default function ArchivePage() {
 
   useEffect(() => {
     setAvatarPreview(profile.avatar);
-    setValue("avatar", profile.avatar);
-  }, [profile.avatar, setValue]);
+  }, [profile.avatar]);
 
-  const avatar = avatarPreview || watchedAvatar;
+  const avatar = avatarPreview;
   const biasMember = memberById[watch("bias") || profile.bias];
   const level = getLevelProgress(getTaskProgress({ profile, timeline, collection, visitedMembers, dailyVisitedMembers }));
   const updateAvatar = (value: string) => {
     setAvatarPreview(value);
-    setValue("avatar", value, { shouldDirty: true, shouldValidate: true });
     setProfile((current) => ({ ...current, avatar: value }));
     toast(messages.pages.archive.avatarUpdated);
   };
@@ -123,14 +123,13 @@ export default function ArchivePage() {
           </div>
           <form onSubmit={handleSubmit((data) => { setProfile({ ...profile, ...data }); toast(messages.common.saved); })} className="glass rounded-[32px] p-6">
             <div className="grid gap-4 md:grid-cols-2">
-              <input type="hidden" {...register("avatar")} />
               <label className="space-y-2 text-sm text-silver md:col-span-2">
                 {messages.pages.archive.bias}
                 <select
                   className="w-full rounded-2xl border border-mint/15 bg-white/10 p-3 text-moon"
                   {...register("bias")}
                   onChange={(event) => {
-                    const bias = event.target.value as UserProfile["bias"];
+                    const bias = event.target.value as ProfileFormValues["bias"];
                     setValue("bias", bias, { shouldDirty: true, shouldValidate: true });
                     setProfile((current) => ({ ...current, bias }));
                     toast(messages.pages.archive.biasUpdated);

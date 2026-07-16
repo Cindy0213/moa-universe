@@ -31,6 +31,11 @@ function TaskRow({ task, labels, goLabel }: { task: TaskProgress; labels: [strin
   );
 }
 
+function taskLabels(messages: ReturnType<typeof useApp>["messages"], task: TaskProgress): [string, string] {
+  const labels = messages.pages.achievements.tasks[task.id as keyof typeof messages.pages.achievements.tasks];
+  return [labels?.[0] ?? task.name, labels?.[1] ?? task.description];
+}
+
 export default function AchievementsPage() {
   const { messages, profile, timeline, collection } = useApp();
   const today = new Date().toISOString().slice(0, 10);
@@ -67,7 +72,7 @@ export default function AchievementsPage() {
             <h2 className="text-2xl font-black text-moon">{messages.pages.achievements.daily}</h2>
             <span className="rounded-full border border-mint/20 px-3 py-1 text-xs text-silver">{messages.pages.achievements.dailyRefresh}</span>
           </div>
-          <div className="space-y-3">{dailyTasks.map((task) => <TaskRow key={task.id} task={task} labels={messages.pages.achievements.tasks[task.id as keyof typeof messages.pages.achievements.tasks]} goLabel={messages.pages.achievements.go} />)}</div>
+          <div className="space-y-3">{dailyTasks.map((task) => <TaskRow key={task.id} task={task} labels={taskLabels(messages, task)} goLabel={messages.pages.achievements.go} />)}</div>
         </section>
 
         <section className="mt-10">
@@ -76,7 +81,7 @@ export default function AchievementsPage() {
             <h2 className="text-2xl font-black text-moon">{messages.pages.achievements.long}</h2>
             <span className="rounded-full border border-mint/20 px-3 py-1 text-xs text-silver">{messages.pages.achievements.longTerm}</span>
           </div>
-          <div className="space-y-3">{longTasks.map((task) => <TaskRow key={task.id} task={task} labels={messages.pages.achievements.tasks[task.id as keyof typeof messages.pages.achievements.tasks]} goLabel={messages.pages.achievements.go} />)}</div>
+          <div className="space-y-3">{longTasks.map((task) => <TaskRow key={task.id} task={task} labels={taskLabels(messages, task)} goLabel={messages.pages.achievements.go} />)}</div>
         </section>
       </main>
     </>
